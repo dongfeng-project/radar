@@ -1,0 +1,10 @@
+coloredlogs
+django
+djangorestframework
+django-environ
+django-extensions
+django-filter
+django-rest-auth
+django-safedelete
+sentry-sdk
+git+http://github.com/dongfeng-project/base.git@master#egg=dongfeng-base
