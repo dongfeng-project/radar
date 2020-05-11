@@ -11,22 +11,38 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
+import platform
+
+import environ
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = environ.Path(__file__) - 2
 
+env = environ.Env()
+
+core_env = env.str("DONGFENG_RADAR_ENV", "")
+if not core_env:
+    if "darwin" in platform.platform().lower() or "macos" in platform.platform().lower() or "windows" in platform.platform().lower():
+        core_env = "dev"
+    else:
+        core_env = "prod"
+
+# 指定encoding
+with open(f"{BASE_DIR.path('.envs')}/{core_env}.env", encoding="utf-8") as f:
+    env.read_env(f)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "f%0@i4h7gx7f252eipj+x(p1gs1s)8t@f$@aid#48$w3m=emaz"
+SECRET_KEY = env.str("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool("DEBUG", False)
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 
 # Application definition
 
@@ -37,6 +53,9 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+
+    # Custom
+    "apps.dashboard"
 ]
 
 MIDDLEWARE = [
@@ -69,30 +88,27 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "radar.wsgi.application"
 
-
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
-DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": os.path.join(BASE_DIR, "db.sqlite3"),}}
-
+DATABASES = {"default": env.db()}
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",},
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator", },
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", },
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator", },
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator", },
 ]
-
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "zh-hans"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Asia/Shanghai"
 
 USE_I18N = True
 
@@ -100,8 +116,48 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = "/static/"
+
+# 日志
+LOG_TYPE = env.list("LOG_TYPE", default=["console"])
+
+_fmt = "%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)s - %(message)s"
+
+log_file = f"{BASE_DIR}/logs/radar.log"
+log_dir = os.path.split(log_file)[0]
+if not os.path.exists(log_dir):
+    os.mkdir(log_dir)
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "console_fmt": {"()": "coloredlogs.ColoredFormatter", "format": _fmt, "datefmt": "%Y-%m-%d %H:%M:%S"},
+        "file_fmt": {"format": _fmt, "datefmt": "%Y-%m-%d %H:%M:%S"},
+    },
+    "handlers": {
+        "console": {"class": "logging.StreamHandler", "level": "DEBUG", "formatter": "console_fmt"},
+        "file": {
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "level": "INFO",
+            "formatter": "file_fmt",
+            "filename": log_file,
+            "encoding": "utf-8",
+            "when": "midnight",
+            "backupCount": 5,
+        },
+    },
+    "loggers": {
+        "": {"handlers": LOG_TYPE, "level": "DEBUG" if DEBUG else "INFO"},
+        "django": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "django.request": {"handlers": ["console"], "level": "ERROR", "propagate": False},
+    },
+}
+
+# Sentry
+SENTRY_DSN = env.str("SENTRY_DSN", default="")
+if SENTRY_DSN:
+    sentry_sdk.init(dsn=SENTRY_DSN, integrations=[DjangoIntegration()], environment=core_env, send_default_pii=True)
