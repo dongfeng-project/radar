@@ -24,7 +24,11 @@ env = environ.Env()
 
 core_env = env.str("DONGFENG_RADAR_ENV", "")
 if not core_env:
-    if "darwin" in platform.platform().lower() or "macos" in platform.platform().lower() or "windows" in platform.platform().lower():
+    if (
+        "darwin" in platform.platform().lower()
+        or "macos" in platform.platform().lower()
+        or "windows" in platform.platform().lower()
+    ):
         core_env = "dev"
     else:
         core_env = "prod"
@@ -53,9 +57,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
     # Custom
-    "apps.dashboard"
+    "apps.dashboard",
 ]
 
 MIDDLEWARE = [
@@ -97,10 +100,10 @@ DATABASES = {"default": env.db()}
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator", },
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", },
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator", },
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator", },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",},
 ]
 
 # Internationalization
@@ -121,10 +124,15 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 
+# DNSLog设置
+# 域名
+DOMAIN = env.str("DOMAIN")
+NS_SERVER = env.str("NS_SERVER")
+
 # 日志
 LOG_TYPE = env.list("LOG_TYPE", default=["console"])
 
-_fmt = "%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)s - %(message)s"
+_fmt = "%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)s [*] %(message)s"
 
 log_file = f"{BASE_DIR}/logs/radar.log"
 log_dir = os.path.split(log_file)[0]
