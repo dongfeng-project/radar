@@ -4,6 +4,7 @@ import logging
 from dnslib import RR, QTYPE, RCODE
 from dnslib.server import DNSServer, BaseResolver, DNSLogger
 
+from apps.dashboard.models import save_dns_req
 from radar.settings import DOMAIN, NS_SERVER
 
 logger = logging.getLogger(__name__)
@@ -35,6 +36,7 @@ class MyLogger(DNSLogger):
             return
 
         logger.info(f"收到域名解析请求 {domain}")
+        save_dns_req(domain=domain)
 
     def log_send(self, handler, data):
         pass

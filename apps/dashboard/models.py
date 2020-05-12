@@ -35,3 +35,26 @@ class HTTPReq(BaseModel):
 
     def __str__(self):
         return f"{self.url}"
+
+
+def save_dns_req(domain: str):
+    """
+    保存DNS解析请求
+    :param domain:
+    :return:
+    """
+    dns_req_obj = DNSReq(domain=domain)
+    dns_req_obj.save()
+
+
+def save_http_req(url: str, referer: str, sip: str, ua: str):
+    """
+    保存HTTP请求
+    :param url:
+    :param referer:
+    :param sip:
+    :param ua:
+    :return:
+    """
+    http_req_obj = HTTPReq(url=url, referer=referer, sip=sip, ua=ua)
+    http_req_obj.save()
