@@ -1,4 +1,5 @@
 coloredlogs
+dnslib
 django
 djangorestframework
 django-environ
