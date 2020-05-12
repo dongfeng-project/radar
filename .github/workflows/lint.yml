@@ -1,9 +1,16 @@
 name: Lint
 
-on: [push]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+      - develop
 
 jobs:
-  unit-test:
+  style-check:
     runs-on: ubuntu-latest
 
     steps:
